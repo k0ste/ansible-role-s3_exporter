@@ -1,0 +1,17 @@
+---
+- name: "Daemon reload"
+  ansible.builtin.systemd:
+    daemon_reload: "yes"
+- name: "Restart s3_exporter"
+  ansible.builtin.systemd:
+    name: "{{ vars['s3_exporter_service'] }}"
+    state: "restarted"
+  when:
+    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_restart']) is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_restart']) == 'true'"
+  vars:
+    s3_exporter_restart: "[] | map(&restart || 'false', @) | [0]"

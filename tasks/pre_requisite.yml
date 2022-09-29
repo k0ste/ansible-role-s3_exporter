@@ -1,0 +1,36 @@
+---
+- name: "s3_exporter | Assert that system manager is systemd"
+  assert:
+    that:
+      - "hostvars[inventory_hostname]['ansible_service_mgr'] == 'systemd'"
+    msg: "System manager is not systemd"
+    quiet: "true"
+- name: "s3_exporter | Add the OS specific varibles"
+  ansible.builtin.include_vars:
+    file: "{{ hostvars[inventory_hostname]['ansible_os_family'] + '.yml' }}"
+- name: "s3_exporter | Set facts about s3_exporter role"
+  ansible.builtin.set_fact:
+    s3_exporter_version: "{{ hostvars[inventory_hostname]['s3_exporter'] |
+      community.general.json_query('[].version | [0]') | default(omit) }}"
+    s3_exporter_settings: "{{ hostvars[inventory_hostname]['s3_exporter'] |
+      community.general.json_query('[].settings[]') | default(omit) }}"
+- name: "s3_exporter | Get last release version from Github"
+  community.general.github_release:
+    user: "ribbybibby"
+    repo: "s3_exporter"
+    action: "latest_release"
+  register: "s3_exporter_version_tag"
+  delegate_to: "localhost"
+  when:
+    - "vars['s3_exporter_version'] is defined"
+    - "vars['s3_exporter_version'] in ['latest', '']"
+- name: "s3_exporter | Set facts about s3_exporter role"
+  ansible.builtin.set_fact:
+    s3_exporter_version: "{{ vars['s3_exporter_version_tag']['tag'][1:] }}"
+- name: "s3_exporter | Create s3_exporter catalog"
+  ansible.builtin.file:
+    path: "{{ vars['s3_exporter_dest'] }}"
+    state: "directory"
+    owner: "root"
+    group: "root"
+    mode: "0755"

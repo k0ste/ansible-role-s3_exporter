@@ -1,0 +1,75 @@
+{{ '## ' + 's3_exporter.service' }}
+{{ '# ' + ansible_managed }}
+{{ '# ' + 'Do not edit manually' }}
+
+{{ '[Unit]' }}
+{{ 'Description=s3_exporter' }}
+{{ 'After=network.target' }}
+{{ 'Wants=network.target' }}
+
+{{ '[Service]' }}
+{{ 'Type=simple' }}
+{{ 'User=nobody' }}
+{{ 'Group=nobody' }}
+{% if vars['s3_exporter_settings'] is defined and
+  vars['s3_exporter_settings'] != '' %}
+{% for s in vars['s3_exporter_settings'] %}
+{% if s.access_key is defined and s.access_key != '' %}
+{{ 'Environment=AWS_ACCESS_KEY_ID=' + s.access_key }}
+{% endif %}
+{% if s.secret_key is defined and s.secret_key != '' %}
+{{ 'Environment=AWS_SECRET_ACCESS_KEY=' + s.secret_key }}
+{% endif %}
+{% if s.secret_key is defined and s.secret_key != '' %}
+{{ 'Environment=AWS_REGION=' + s.region }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{{ 'ExecStart=' + vars['s3_exporter_dest'] + '/s3_exporter' -}}
+{% if vars['s3_exporter_settings'] is defined and
+  vars['s3_exporter_settings'] != '' %}
+{% for s in vars['s3_exporter_settings'] %}
+{% if s.web_listen_address is defined and s.web_listen_address != '' %}
+{{ ' \\' }}
+{{ '  --web.listen-address=' + s.web_listen_address -}}
+{% endif %}
+{% if s.web_metrics_path is defined and s.web_metrics_path != '' %}
+{{ ' \\' }}
+{{ '  --web.metrics-path=' + s.web_metrics_path -}}
+{% endif %}
+{% if s.web_probe_path is defined and s.web_probe_path != '' %}
+{{ ' \\' }}
+{{ '  --web.probe-path=' + s.web_probe_path -}}
+{% endif %}
+{% if s.web_discovery_path is defined and s.web_discovery_path != '' %}
+{{ ' \\' }}
+{{ '  --web.discovery-path=' + s.web_discovery_path -}}
+{% endif %}
+{% if s.endpoint_url is defined and s.endpoint_url != '' %}
+{{ ' \\' }}
+{{ '  --s3.endpoint-url=' + s.endpoint_url -}}
+{% endif %}
+{% if s.disable_ssl is defined and s.disable_ssl == 'true' %}
+{{ ' \\' }}
+{{ '  --s3.disable-ssl' -}}
+{% endif %}
+{% if s.force_path_style is defined and s.force_path_style == 'true' %}
+{{ ' \\' }}
+{{ '  --s3.force-path-style' -}}
+{% endif %}
+{% if s.log_level is defined and s.log_level != '' %}
+{{ ' \\' }}
+{{ '  --log.level=' + s.log_level -}}
+{% endif %}
+{% if s.log_format is defined and s.log_format != '' %}
+{{ ' \\' }}
+{{ '  --log.format=' + s.log_format -}}
+{% endif %}
+{% if loop.last %}
+{{ '' }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{{ '[Install]' }}
+{{ 'WantedBy=multi-user.target' }}
