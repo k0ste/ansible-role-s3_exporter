@@ -1,12 +1,39 @@
 ---
-- ansible.builtin.import_tasks:
+- name: "s3_exporter | Include pre requisite tasks"
+  ansible.builtin.import_tasks:
     file: "pre_requisite.yml"
-- ansible.builtin.import_tasks:
+- name: "s3_exporter | Include packages tasks [package deployment]"
+  ansible.builtin.include_tasks:
     file: "packages.yml"
-- ansible.builtin.import_tasks:
-    file: "download.yml"
-- ansible.builtin.include_tasks:
-    file: "deploy_s3_exporter.yml"
   when:
-    - "vars['s3_exporter_settings'] is defined"
-    - "vars['s3_exporter_settings'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       == 'true'"
+  vars:
+    s3_exporter_install_package:
+      "[] | map(&install_package || 'false', @) | [0]"
+    s3_exporter_pacakges_variant:
+      "{{ hostvars[inventory_hostname]['s3_exporter_package'] }}"
+- name: "s3_exporter | Include packages tasks [not package deployment]"
+  ansible.builtin.include_tasks:
+    file: "download.yml"
+  when:
+    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       == 'false'"
+  vars:
+    s3_exporter_install_package:
+      "[] | map(&install_package || 'false', @) | [0]"
+- name: "s3_exporter | Include deployment tasks"
+  ansible.builtin.import_tasks:
+    file: "deploy.yml"

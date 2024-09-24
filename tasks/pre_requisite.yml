@@ -1,13 +1,42 @@
 ---
 - name: "s3_exporter | Assert that system manager is systemd"
-  assert:
+  ansible.builtin.assert:
     that:
       - "hostvars[inventory_hostname]['ansible_service_mgr'] == 'systemd'"
-    msg: "System manager is not systemd"
+    fail_msg: "System manager is not systemd"
     quiet: "true"
 - name: "s3_exporter | Add the OS specific varibles"
   ansible.builtin.include_vars:
     file: "{{ hostvars[inventory_hostname]['ansible_os_family'] + '.yml' }}"
+- name: "s3_exporter | Set facts about s3_exporter role"
+  ansible.builtin.set_fact:
+    s3_exporter_version:
+      "{{ hostvars[inventory_hostname]['s3_exporter'] |
+      community.general.json_query('[].version | [0]') | default(omit) }}"
+    s3_exporter_settings:
+      "{{ hostvars[inventory_hostname]['s3_exporter'] |
+      community.general.json_query('[].settings | [0]') | default(omit) }}"
+    s3_exporter_package_state:
+      "{{ hostvars[inventory_hostname]['s3_exporter'] |
+      community.general.json_query('[].package_state | [0]') | default(omit) }}"
+- name: "s3_exporter | Assert that s3_exporter package state in valid value"
+  ansible.builtin.assert:
+    that:
+      - "vars['s3_exporter_package_state'] in ['present', 'latest']"
+    fail_msg: "{{ 'package_state must be in `present` or `latest`,
+      current is: ' + vars['s3_exporter_package_state'] }}"
+    quiet: "true"
+  when:
+    - "vars['s3_exporter_package_state'] is defined"
+    - "vars['s3_exporter_package_state'] != []"
+    - "vars['s3_exporter_package_state'] != ''"
+- name: "s3_exporter | Set package state to 'present' cause value is not
+    defined"
+  ansible.builtin.set_fact:
+    s3_exporter_package_state: "present"
+  when:
+    - "vars['s3_exporter_package_state'] is defined"
+    - "vars['s3_exporter_package_state'] == ''"
 - name: "s3_exporter | Set facts about s3_exporter role"
   ansible.builtin.set_fact:
     s3_exporter_version: "{{ hostvars[inventory_hostname]['s3_exporter'] |
@@ -19,19 +48,46 @@
     user: "ribbybibby"
     repo: "s3_exporter"
     action: "latest_release"
-  run_once: "true"
+  run_once: true
   register: "s3_exporter_version_tag"
   delegate_to: "localhost"
   when:
     - "vars['s3_exporter_version'] is defined"
-    - "vars['s3_exporter_version'] in ['latest', '']"
+    - "vars['s3_exporter_version'] == 'latest'"
+    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       == 'false'"
+  vars:
+    s3_exporter_install_package:
+      "[] | map(&install_package || 'false', @) | [0]"
 - name: "s3_exporter | Set facts about s3_exporter role"
   ansible.builtin.set_fact:
+    s3_exporter_package_state: "present"
     s3_exporter_version: "{{ vars['s3_exporter_version_tag']['tag'][1:] }}"
+  when:
+    - "vars['s3_exporter_version_tag'] is defined"
+    - "not vars['s3_exporter_version_tag']['skipped']"
 - name: "s3_exporter | Create s3_exporter catalog"
   ansible.builtin.file:
-    path: "{{ vars['s3_exporter_dest'] }}"
+    path: "{{ hostvars[inventory_hostname]['s3_exporter_dest'] }}"
     state: "directory"
     owner: "root"
     group: "root"
     mode: "0755"
+  when:
+    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] |
+       community.general.json_query(vars['s3_exporter_install_package'])
+       == 'false'"
+  vars:
+    s3_exporter_install_package:
+      "[] | map(&install_package || 'false', @) | [0]"

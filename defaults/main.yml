@@ -1,6 +1,5 @@
 ---
-s3_exporter_dest: '/opt/s3_exporter'
-s3_exporter_service: 's3_exporter'
+s3_exporter: []
 s3_exporter_url:
   'https://github.com/ribbybibby/s3_exporter/releases/download'
 s3_exporter_arch: 'linux_amd64'

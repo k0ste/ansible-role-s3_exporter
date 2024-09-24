@@ -4,7 +4,7 @@
     src: "{{ vars['s3_exporter_url'] + '/v' + vars['s3_exporter_version'] +
       '/s3_exporter_' + vars['s3_exporter_version'] + '_' +
       vars['s3_exporter_arch'] + '.tar.gz' }}"
-    dest: "{{ vars['s3_exporter_dest'] }}"
+    dest: "{{ hostvars[inventory_hostname]['s3_exporter_dest'] }}"
     remote_src: "yes"
     include: "s3_exporter"
     mode: "0775"

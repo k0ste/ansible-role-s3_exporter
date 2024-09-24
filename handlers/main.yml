@@ -4,7 +4,7 @@
     daemon_reload: "yes"
 - name: "Restart s3_exporter"
   ansible.builtin.systemd:
-    name: "{{ vars['s3_exporter_service'] }}"
+    name: "{{ hostvars[inventory_hostname]['s3_exporter_service'] }}"
     state: "restarted"
   when:
     - "hostvars[inventory_hostname]['s3_exporter'] is defined"

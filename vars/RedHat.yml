@@ -1,4 +1,8 @@
 ---
-s3_exporter_package:
+s3_exporter_dest: '/opt/s3_exporter'
+s3_exporter_bin: '/usr/bin/s3_exporter'
+s3_exporter_service: 's3_exporter'
+s3_exporter_package: 's3_exporter'
+s3_exporter_packages_deps:
   - 'unzip'
   - 'tar'
