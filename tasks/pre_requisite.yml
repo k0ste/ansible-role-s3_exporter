@@ -19,6 +19,9 @@
     s3_exporter_package_state:
       "{{ hostvars[inventory_hostname]['s3_exporter'] |
       community.general.json_query('[].package_state | [0]') | default(omit) }}"
+  when:
+    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
+    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
 - name: "s3_exporter | Assert that s3_exporter package state in valid value"
   ansible.builtin.assert:
     that:
@@ -28,15 +31,15 @@
     quiet: "true"
   when:
     - "vars['s3_exporter_package_state'] is defined"
-    - "vars['s3_exporter_package_state'] != []"
-    - "vars['s3_exporter_package_state'] != ''"
+    - "vars['s3_exporter_package_state'] not in ['', [], None]"
 - name: "s3_exporter | Set package state to 'present' cause value is not
     defined"
   ansible.builtin.set_fact:
     s3_exporter_package_state: "present"
   when:
     - "vars['s3_exporter_package_state'] is defined"
-    - "vars['s3_exporter_package_state'] == ''"
+    - "(vars['s3_exporter_package_state'] == '' or
+      vars['s3_exporter_package_state'] == None)"
 - name: "s3_exporter | Set facts about s3_exporter role"
   ansible.builtin.set_fact:
     s3_exporter_version: "{{ hostvars[inventory_hostname]['s3_exporter'] |
@@ -55,7 +58,7 @@
     - "vars['s3_exporter_version'] is defined"
     - "vars['s3_exporter_version'] == 'latest'"
     - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
     - "hostvars[inventory_hostname]['s3_exporter'] |
        community.general.json_query(vars['s3_exporter_install_package'])
        is defined"
@@ -81,7 +84,7 @@
     mode: "0755"
   when:
     - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
     - "hostvars[inventory_hostname]['s3_exporter'] |
        community.general.json_query(vars['s3_exporter_install_package'])
        is defined"

@@ -7,7 +7,7 @@
     file: "packages.yml"
   when:
     - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
     - "hostvars[inventory_hostname]['s3_exporter'] |
        community.general.json_query(vars['s3_exporter_install_package'])
        is defined"
@@ -24,7 +24,7 @@
     file: "download.yml"
   when:
     - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] != ''"
+    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
     - "hostvars[inventory_hostname]['s3_exporter'] |
        community.general.json_query(vars['s3_exporter_install_package'])
        is defined"
