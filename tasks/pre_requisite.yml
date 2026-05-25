@@ -1,51 +1,54 @@
 ---
+- name: "s3_exporter | Assert that ansible facts gathered successfully"
+  ansible.builtin.assert:
+    that:
+      - "hostvars[inventory_hostname]['ansible_facts']['service_mgr'] is
+        defined"
+    fail_msg: "'ansible_facts' not found. Please enable facts gathering"
+    quiet: "true"
 - name: "s3_exporter | Assert that system manager is systemd"
   ansible.builtin.assert:
     that:
-      - "hostvars[inventory_hostname]['ansible_service_mgr'] == 'systemd'"
+      - "hostvars[inventory_hostname]['ansible_facts']['service_mgr'] ==
+        'systemd'"
     fail_msg: "System manager is not systemd"
     quiet: "true"
-- name: "s3_exporter | Add the OS specific varibles"
+- name: "s3_exporter | Add the OS specific variables"
   ansible.builtin.include_vars:
-    file: "{{ hostvars[inventory_hostname]['ansible_os_family'] + '.yml' }}"
+    file: "{{ hostvars[inventory_hostname]['ansible_facts']['os_family'] +
+      '.yml' }}"
 - name: "s3_exporter | Set facts about s3_exporter role"
   ansible.builtin.set_fact:
-    s3_exporter_version:
-      "{{ hostvars[inventory_hostname]['s3_exporter'] |
-      community.general.json_query('[].version | [0]') | default(omit) }}"
-    s3_exporter_settings:
-      "{{ hostvars[inventory_hostname]['s3_exporter'] |
-      community.general.json_query('[].settings | [0]') | default(omit) }}"
-    s3_exporter_package_state:
-      "{{ hostvars[inventory_hostname]['s3_exporter'] |
-      community.general.json_query('[].package_state | [0]') | default(omit) }}"
+    s3_exporter_version: "{{ lookup('ansible.builtin.vars',
+      's3_exporter') | community.general.json_query('[].version | [0]') }}"
+    s3_exporter_settings: "{{ lookup('ansible.builtin.vars',
+      's3_exporter') | community.general.json_query('[].settings | [0]') }}"
+    s3_exporter_package_state: "{{ lookup('ansible.builtin.vars',
+      's3_exporter') |
+      community.general.json_query('[].package_state | [0]') }}"
   when:
-    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
-- name: "s3_exporter | Assert that s3_exporter package state in valid value"
+    - "lookup('ansible.builtin.vars', 's3_exporter', default='')
+      not in ['', [], '[]', None]"
+- name: "s3_exporter | Assert that s3_exporter package state in
+    valid value"
   ansible.builtin.assert:
     that:
-      - "vars['s3_exporter_package_state'] in ['present', 'latest']"
+      - "lookup('ansible.builtin.vars', 's3_exporter_package_state') in
+        ['present', 'latest']"
     fail_msg: "{{ 'package_state must be in `present` or `latest`,
-      current is: ' + vars['s3_exporter_package_state'] }}"
+      current is: ' + lookup('ansible.builtin.vars',
+      's3_exporter_package_state') }}"
     quiet: "true"
   when:
-    - "vars['s3_exporter_package_state'] is defined"
-    - "vars['s3_exporter_package_state'] not in ['', [], None]"
+    - "lookup('ansible.builtin.vars', 's3_exporter_package_state',
+      default='') not in ['', [], '[]', None, 'present', 'latest']"
 - name: "s3_exporter | Set package state to 'present' cause value is not
     defined"
   ansible.builtin.set_fact:
     s3_exporter_package_state: "present"
   when:
-    - "vars['s3_exporter_package_state'] is defined"
-    - "(vars['s3_exporter_package_state'] == '' or
-      vars['s3_exporter_package_state'] == None)"
-- name: "s3_exporter | Set facts about s3_exporter role"
-  ansible.builtin.set_fact:
-    s3_exporter_version: "{{ hostvars[inventory_hostname]['s3_exporter'] |
-      community.general.json_query('[].version | [0]') | default(omit) }}"
-    s3_exporter_settings: "{{ hostvars[inventory_hostname]['s3_exporter'] |
-      community.general.json_query('[].settings[]') | default(omit) }}"
+    - "lookup('ansible.builtin.vars', 's3_exporter_package_state',
+      default='') in ['', [], '[]', None]"
 - name: "s3_exporter | Get last release version from Github"
   community.general.github_release:
     user: "ribbybibby"
@@ -55,42 +58,39 @@
   register: "s3_exporter_version_tag"
   delegate_to: "localhost"
   when:
-    - "vars['s3_exporter_version'] is defined"
-    - "vars['s3_exporter_version'] == 'latest'"
-    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
-    - "hostvars[inventory_hostname]['s3_exporter'] |
-       community.general.json_query(vars['s3_exporter_install_package'])
-       is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] |
-       community.general.json_query(vars['s3_exporter_install_package'])
-       == 'false'"
+    - "lookup('ansible.builtin.vars', 's3_exporter_version',
+      default='') == 'latest'"
+    - "lookup('ansible.builtin.vars', 's3_exporter', default='')
+      not in ['', [], '[]', None]"
+    - "lookup('ansible.builtin.vars', 's3_exporter') |
+       community.general.json_query(lookup('ansible.builtin.vars',
+      's3_exporter_install_package', default='')) == 'false'"
   vars:
-    s3_exporter_install_package:
-      "[] | map(&install_package || 'false', @) | [0]"
+    s3_exporter_install_package: "[] |
+      map(&install_package || 'false', @) | [0]"
 - name: "s3_exporter | Set facts about s3_exporter role"
   ansible.builtin.set_fact:
     s3_exporter_package_state: "present"
-    s3_exporter_version: "{{ vars['s3_exporter_version_tag']['tag'][1:] }}"
+    s3_exporter_version: "{{ lookup('ansible.builtin.vars',
+      's3_exporter_version_tag')['tag'][1:] }}"
   when:
-    - "vars['s3_exporter_version_tag'] is defined"
-    - "not vars['s3_exporter_version_tag']['skipped']"
+    - "lookup('ansible.builtin.vars', 's3_exporter_version_tag',
+      default='') not in ['', [], '[]', None]"
+    - "not lookup('ansible.builtin.vars',
+      's3_exporter_version_tag')['skipped']"
 - name: "s3_exporter | Create s3_exporter catalog"
   ansible.builtin.file:
-    path: "{{ hostvars[inventory_hostname]['s3_exporter_dest'] }}"
+    path: "{{ lookup('ansible.builtin.vars', 's3_exporter_dest') }}"
     state: "directory"
     owner: "root"
     group: "root"
     mode: "0755"
   when:
-    - "hostvars[inventory_hostname]['s3_exporter'] is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] not in ['', [], None]"
-    - "hostvars[inventory_hostname]['s3_exporter'] |
-       community.general.json_query(vars['s3_exporter_install_package'])
-       is defined"
-    - "hostvars[inventory_hostname]['s3_exporter'] |
-       community.general.json_query(vars['s3_exporter_install_package'])
-       == 'false'"
+    - "lookup('ansible.builtin.vars', 's3_exporter', default='')
+      not in ['', [], '[]', None]"
+    - "lookup('ansible.builtin.vars', 's3_exporter') |
+       community.general.json_query(lookup('ansible.builtin.vars',
+      's3_exporter_install_package', default='')) == 'false'"
   vars:
-    s3_exporter_install_package:
-      "[] | map(&install_package || 'false', @) | [0]"
+    s3_exporter_install_package: "[] |
+      map(&install_package || 'false', @) | [0]"

@@ -1,10 +1,12 @@
 ---
 - name: "s3_exporter | Download & unarchive exporter binary from tarball"
   ansible.builtin.unarchive:
-    src: "{{ vars['s3_exporter_url'] + '/v' + vars['s3_exporter_version'] +
-      '/s3_exporter_' + vars['s3_exporter_version'] + '_' +
-      vars['s3_exporter_arch'] + '.tar.gz' }}"
-    dest: "{{ hostvars[inventory_hostname]['s3_exporter_dest'] }}"
+    src: "{{ lookup('ansible.builtin.vars', 's3_exporter_url') + '/v' +
+      lookup('ansible.builtin.vars', 's3_exporter_version') +
+      '/s3_exporter_' + lookup('ansible.builtin.vars',
+      's3_exporter_version') + '_' + lookup('ansible.builtin.vars',
+      's3_exporter_arch') + '.tar.gz' }}"
+    dest: "{{ lookup('ansible.builtin.vars', 's3_exporter_dest') }}"
     remote_src: "yes"
     include: "s3_exporter"
     mode: "0775"

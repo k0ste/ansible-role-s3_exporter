@@ -2,40 +2,48 @@
 {{ '# ' + ansible_managed }}
 {{ '# Do not edit manually' }}
 
-{% if vars['s3_exporter_settings'] is defined and
-  vars['s3_exporter_settings'] != '' %}
-{% for s in vars['s3_exporter_settings'] %}
+{% if lookup('ansible.builtin.vars', 's3_exporter_settings', default='')
+  not in ['', [], '[]', None] %}
+{% for s in lookup('ansible.builtin.vars', 's3_exporter_settings') %}
 {% if loop['first'] %}
-{% if s['aws_access_key'] is defined and s['aws_access_key'] != '' %}
+{% if s['aws_access_key'] is defined and s['aws_access_key']
+  not in ['', [], '[]', None] %}
 {{ 'AWS_ACCESS_KEY_ID=\"' + s['aws_access_key'] + '\"' }}
 {% else %}
-{{ 'AWS_ACCESS_KEY_ID=""' }}
+{{ 'AWS_ACCESS_KEY_ID=\"\"' }}
 {% endif %}
-{% if s['aws_secret_key'] is defined and s['aws_secret_key'] != '' %}
+{% if s['aws_secret_key'] is defined and s['aws_secret_key']
+  not in ['', [], '[]', None] %}
 {{ 'AWS_SECRET_ACCESS_KEY=\"' + s['aws_secret_key'] + '\"' }}
 {% else %}
-{{ 'AWS_SECRET_ACCESS_KEY=""' }}
+{{ 'AWS_SECRET_ACCESS_KEY=\"\"' }}
 {% endif %}
-{% if s['aws_region'] is defined and s['aws_region'] != '' %}
+{% if s['aws_region'] is defined and s['aws_region']
+  not in ['', [], '[]', None] %}
 {{ 'AWS_REGION=\"' + s['aws_region'] + '\"' }}
 {% else %}
-{{ 'AWS_REGION=""' }}
+{{ 'AWS_REGION=\"\"' }}
 {% endif %}
-{{ 'OPTIONS=\"' -}}
+{{ 'S3_EXPORTER_ARGS=\"' -}}
 {% endif %}
-{% if s['web_listen_address'] is defined and s['web_listen_address'] != '' %}
+{% if s['web_listen_address'] is defined and s['web_listen_address']
+  not in ['', [], '[]', None] %}
 {{ ' --web.listen-address=' + s['web_listen_address'] -}}
 {% endif %}
-{% if s['web_metrics_path'] is defined and s['web_metrics_path'] != '' %}
+{% if s['web_metrics_path'] is defined and s['web_metrics_path']
+  not in ['', [], '[]', None] %}
 {{ ' --web.metrics-path=' + s['web_metrics_path'] -}}
 {% endif %}
-{% if s['web_probe_path'] is defined and s['web_probe_path'] != '' %}
+{% if s['web_probe_path'] is defined and s['web_probe_path']
+  not in ['', [], '[]', None] %}
 {{ ' --web.probe-path=' + s['web_probe_path'] -}}
 {% endif %}
-{% if s['web_discovery_path'] is defined and s['web_discovery_path'] != '' %}
+{% if s['web_discovery_path'] is defined and s['web_discovery_path']
+  not in ['', [], '[]', None] %}
 {{ ' --web.discovery-path=' + s['web_discovery_path'] -}}
 {% endif %}
-{% if s['s3_endpoint_url'] is defined and s['s3_endpoint_url'] != '' %}
+{% if s['s3_endpoint_url'] is defined and s['s3_endpoint_url']
+  not in ['', [], '[]', None] %}
 {{ ' --s3.endpoint-url=' + s['s3_endpoint_url'] -}}
 {% endif %}
 {% if s['s3_disable_ssl'] is defined and s['s3_disable_ssl'] == 'true' %}
@@ -48,14 +56,16 @@
 {% if s['http_tls_insecure'] is defined and s['http_tls_insecure'] == 'true' %}
 {{ ' --http.tls-insecure' -}}
 {% endif %}
-{% if s['http_timeout'] is defined and s['http_timeout'] != '' %}
+{% if s['http_timeout'] is defined and s['http_timeout']
+  not in ['', [], '[]', None] %}
 {{ ' --http.timeout=' ~ s['http_timeout'] -}}
 {% endif %}
 {% if s['log_level'] is defined and s['log_level'] in ['debug', 'info', 'warn',
   'error', 'fatal'] %}
 {{ ' --log.level=' + s['log_level'] -}}
 {% endif %}
-{% if s['log_format'] is defined and s['log_format'] != '' %}
+{% if s['log_format'] is defined and s['log_format']
+  not in ['', [], '[]', None] %}
 {{ ' --log.format=' + s['log_format'] -}}
 {% endif %}
 {% if loop['last'] %}
@@ -63,5 +73,5 @@
 {% endif %}
 {% endfor %}
 {% else %}
-{{ 'OPTIONS=""' }}
+{{ 'S3_EXPORTER_ARGS=\"\"' }}
 {% endif %}

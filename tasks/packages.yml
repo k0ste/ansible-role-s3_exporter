@@ -1,34 +1,41 @@
 ---
 - name: "s3_exporter | Install the required packages in Redhat derivatives"
   when:
-    - "hostvars[inventory_hostname]['ansible_os_family'] == 'RedHat'"
+    - "hostvars[inventory_hostname]['ansible_facts']['os_family'] == 'RedHat'"
   block:
     - name: "s3_exporter | Update dnf cache"
       ansible.builtin.dnf:
         update_cache: "yes"
     - name: "s3_exporter | Install package with dnf"
       ansible.builtin.dnf:
-        name: "{{ s3_exporter_pacakges_variant }}"
-        state: "{{ vars['s3_exporter_package_state'] | default(omit) }}"
+        name: "{{ lookup('ansible.builtin.vars',
+          's3_exporter_pacakges_variant') }}"
+        state: "{{ lookup('ansible.builtin.vars',
+          's3_exporter_package_state') }}"
 - name: "s3_exporter | Install the required packages in Debian derivatives"
   when:
-    - "hostvars[inventory_hostname]['ansible_os_family'] == 'Debian'"
+    - "hostvars[inventory_hostname]['ansible_facts']['os_family'] == 'Debian'"
   block:
     - name: "s3_exporter | Update apt cache"
       ansible.builtin.apt:
         update_cache: "yes"
     - name: "s3_exporter | Install package with apt"
       ansible.builtin.apt:
-        name: "{{ s3_exporter_pacakges_variant }}"
-        state: "{{ vars['s3_exporter_package_state'] | default(omit) }}"
+        name: "{{ lookup('ansible.builtin.vars',
+          's3_exporter_pacakges_variant') }}"
+        state: "{{ lookup('ansible.builtin.vars',
+          's3_exporter_package_state') }}"
 - name: "s3_exporter | Install the required packages in ArchLinux derivatives"
   when:
-    - "hostvars[inventory_hostname]['ansible_os_family'] == 'Archlinux'"
+    - "hostvars[inventory_hostname]['ansible_facts']['os_family'] ==
+      'Archlinux'"
   block:
     - name: "s3_exporter | Update pacman cache"
       community.general.pacman:
         update_cache: "yes"
     - name: "s3_exporter | Install package with pacman"
       community.general.pacman:
-        name: "{{ s3_exporter_pacakges_variant }}"
-        state: "{{ vars['s3_exporter_package_state'] | default(omit) }}"
+        name: "{{ lookup('ansible.builtin.vars',
+          's3_exporter_pacakges_variant') }}"
+        state: "{{ lookup('ansible.builtin.vars',
+          's3_exporter_package_state') }}"
